@@ -1,0 +1,5 @@
+venv/
+metadata_dev/
+mic_dev/
+tennis_dataset_sliced/
+*.mp4
