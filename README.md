@@ -14,12 +14,27 @@
 
 ## Chi tiết hoạt động:
 
-### Tạo môi trường ảo và cài đặt thư viện
+### Tạo môi trường ảo
 
 ```
-python -m venv venv
-venv/Scripts/activate
+# Tạo môi trường tên là 'audio_env' với Python 3.10
+conda create -n audio_env python=3.10 -y
+
+# Kích hoạt môi trường
+conda activate audio_env
 ```
+
+### Cài đặt các thư viện hệ thống cần thiết
+
+```
+# Cài FFmpeg cho xử lý video/audio
+conda install -c conda-forge ffmpeg -y
+
+# Cài CUDA Toolkit và cuDNN (Hỗ trợ GPU cho TensorFlow)
+conda install -c conda-forge cudatoolkit=11.8.0 cudnn=8.9.2 -y
+```
+
+### Cài đặt các thư viện Python
 
 ```
 pip install -r requirements.txt
@@ -34,6 +49,12 @@ python convert_audio.py
 ```
 
 ### Bước 2: Trich xuất tiếng đập bóng từ âm thanh Raw và tạo metadata
+
+```
+python generate_data.py
+```
+
+Hoặc
 
 Chạy file `extract_yamnet.ipynb` trong Kaggle. Tải 2 file `cut.wav` và `cut1.wav` cùng với file .wav được tạo từ Bước 1 lên Kaggle
 

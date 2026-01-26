@@ -5,11 +5,13 @@ import librosa
 import soundfile as sf
 from tqdm import tqdm
 
-BASE_DIR = r"D:\Code\Visual studio code\pickleball_audio_extract"
-INPUT_WAV = os.path.join(BASE_DIR, "mic_dev", "generated_match_01.wav")
-INPUT_CSV = os.path.join(BASE_DIR, "metadata_dev", "generated_match_01.csv")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-OUTPUT_DIR = r"D:\Code\Visual studio code\pickleball_audio_extract\pickleball_dataset_sliced" 
+BASE_INPUT = os.path.join(BASE_DIR, "pickleball_dataset")
+INPUT_WAV = os.path.join(BASE_INPUT, "mic_dev", "generated_match_01.wav")
+INPUT_CSV = os.path.join(BASE_INPUT, "metadata_dev", "generated_match_01.csv")
+
+OUTPUT_DIR = os.path.join(BASE_DIR, "pickleball_sliced") 
 MIC_OUT = os.path.join(OUTPUT_DIR, "mic_dev")
 META_OUT = os.path.join(OUTPUT_DIR, "metadata_dev")
 

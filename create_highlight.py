@@ -3,12 +3,15 @@ import pandas as pd
 from moviepy import VideoFileClip, concatenate_videoclips
 from tqdm import tqdm
 
-VIDEO_PATH = r"D:\Code\Visual studio code\pickleball_audio_extract\pickleball_sample.mp4"
-META_DIR = r"D:\Code\Visual studio code\pickleball_audio_extract\pickleball_dataset_sliced\metadata_dev"
-OUTPUT_VIDEO = r"D:\Code\Visual studio code\pickleball_audio_extract\highlight.mp4"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+VIDEO_PATH = os.path.join(BASE_DIR, "raw_video/videoplayback.mp4")
+BASE_INPUT = os.path.join(BASE_DIR, "pickleball_sliced")
+META_DIR = os.path.join(BASE_INPUT, "metadata_dev")
+OUTPUT_VIDEO = os.path.join(BASE_DIR, "result_audio/hightlight.mp4")
 
 SEGMENT_DURATION = 10.0
-MIN_HITS = 2
+MIN_HITS = 5
 
 def create_highlight_video():
     if not os.path.exists(VIDEO_PATH):
