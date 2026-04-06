@@ -59,8 +59,8 @@ def mp4_to_wav(input_mp4, output_wav, sample_rate=16000, mono=True):
 
 if __name__ == "__main__":
     
-    INPUT_FILE = r"D:\Code\Visual studio code\pickleball_audio_extract\pickleball_sample.mp4"
-    OUTPUT_FILE = r"D:\Code\Visual studio code\pickleball_audio_extract\pickleball_sample.wav"
+    INPUT_FILE = r"/home/vlm/code/khanh/audio_detection/input_sample_match.mp4"
+    OUTPUT_FILE = r"/home/vlm/code/khanh/audio_detection/input_sample_match.wav"
 
     mp4_to_wav(
         input_mp4=INPUT_FILE,

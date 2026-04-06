@@ -10,13 +10,13 @@ from tqdm import tqdm
 # ==========================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-BASE_INPUT = os.path.join(BASE_DIR, "pickleball_dataset")
+BASE_INPUT = os.path.join(BASE_DIR, "pickleball_test3")
 INPUT_WAV = os.path.join(BASE_INPUT, "mic_dev", "generated_match_01.wav")
 
 # [CẬP NHẬT] Đọc file csv mới từ generate_data.py
 INPUT_CSV = os.path.join(BASE_INPUT, "metadata_dev", "audio_ball_hits.csv")
 
-OUTPUT_DIR = os.path.join(BASE_DIR, "pickleball_sliced") 
+OUTPUT_DIR = os.path.join(BASE_DIR, "pickleball_sliced3") 
 MIC_OUT = os.path.join(OUTPUT_DIR, "mic_dev")
 META_OUT = os.path.join(OUTPUT_DIR, "metadata_dev")
 

@@ -3,7 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_INPUT = os.path.join(BASE_DIR, "pickleball_sliced")
+BASE_INPUT = os.path.join(BASE_DIR, "pickleball_sliced3")
 META_DIR = os.path.join(BASE_INPUT, "metadata_dev")
 
 def count_hits_in_csvs(directory):

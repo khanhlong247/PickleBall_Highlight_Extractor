@@ -5,91 +5,99 @@ from tqdm import tqdm
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-VIDEO_PATH = os.path.join(BASE_DIR, "raw_video/videoplayback.mp4")
-BASE_INPUT = os.path.join(BASE_DIR, "pickleball_sliced")
-META_DIR = os.path.join(BASE_INPUT, "metadata_dev")
-OUTPUT_VIDEO = os.path.join(BASE_DIR, "result_audio/hightlight.mp4")
+VIDEO_PATH = os.path.join(BASE_DIR, "input_sample_match.mp4")
+MASTER_CSV = os.path.join(BASE_DIR, "pickleball_test1", "metadata_dev", "audio_ball_hits.csv")
+OUTPUT_VIDEO = os.path.join(BASE_DIR, "result_video", "highlight.mp4")
 
-SEGMENT_DURATION = 10.0
-MIN_HITS = 5
+# --- CẤU HÌNH THUẬT TOÁN NHỊP ĐỘ ---
+MIN_RALLY_HITS = 5        # Một highlight cần ít nhất bao nhiêu lần chạm vợt liên tiếp
+MIN_INTERVAL = 0.2        # Thời gian tối thiểu giữa 2 lần chạm (chống nhiễu nhồi bóng)
+MAX_INTERVAL = 2.0        # Thời gian tối đa giữa 2 lần chạm (bóng chết)
+PADDING_START = 2.0       # Lùi lại 2 giây trước tiếng đập đầu tiên để thấy cầu thủ chuẩn bị
+PADDING_END = 2.0         # Cộng thêm 2 giây sau tiếng đập cuối cùng để thấy kết quả pha bóng
+
+def find_dynamic_highlights(df):
+    timestamps = sorted(df['midpoint'].tolist())
+    
+    highlights = []
+    current_chain = []
+
+    for t in timestamps:
+        if not current_chain:
+            current_chain.append(t)
+            continue
+            
+        time_since_last = t - current_chain[-1]
+        
+        if MIN_INTERVAL <= time_since_last <= MAX_INTERVAL:
+            current_chain.append(t)
+        
+        elif time_since_last < MIN_INTERVAL:
+            continue
+            
+        else:
+            if len(current_chain) >= MIN_RALLY_HITS:
+                highlights.append({
+                    'start_hit': current_chain[0],
+                    'end_hit': current_chain[-1],
+                    'num_hits': len(current_chain)
+                })
+            current_chain = [t]
+
+    if len(current_chain) >= MIN_RALLY_HITS:
+        highlights.append({
+            'start_hit': current_chain[0],
+            'end_hit': current_chain[-1],
+            'num_hits': len(current_chain)
+        })
+        
+    return highlights
 
 def create_highlight_video():
     if not os.path.exists(VIDEO_PATH):
         print(f"Video not found: {VIDEO_PATH}")
         return
-    if not os.path.exists(META_DIR):
-        print(f"CSV directory not found: {META_DIR}")
+    if not os.path.exists(MASTER_CSV):
+        print(f"CSV gốc không tồn tại: {MASTER_CSV}")
         return
 
-    # Find valid segments (>= 5 hits)
-    print("Scanning CSV files for high activity segments...")
-    csv_files = [f for f in os.listdir(META_DIR) if f.endswith('.csv')]
+    print("Đang phân tích nhịp độ trận đấu (Pace Analysis)...")
+    df = pd.read_csv(MASTER_CSV)
     
-    high_activity_indices = []
-
-    for filename in tqdm(csv_files, desc="Analyzing CSV"):
-        try:
-            filepath = os.path.join(META_DIR, filename)
-            df = pd.read_csv(filepath)
-            
-            # Count hits
-            if 'class' in df.columns:
-                num_hits = len(df[df['class'] == 'hit'])
-            else:
-                num_hits = len(df)
-            
-            if num_hits >= MIN_HITS:
-                idx_str = filename.split('_')[-1].split('.')[0]
-                idx = int(idx_str)
-                high_activity_indices.append((idx, num_hits))
-                
-        except Exception as e:
-            print(f"Error reading file {filename}: {e}")
-
-    high_activity_indices.sort(key=lambda x: x[0])
-
-    if not high_activity_indices:
-        print(f"No segments found with >= {MIN_HITS} hits.")
+    rallies = find_dynamic_highlights(df)
+    
+    if not rallies:
+        print("Không tìm thấy pha đôi công nào đủ điều kiện highlight.")
         return
 
-    print(f"\nFound {len(high_activity_indices)} exciting segments.")
-    
-    # Process Video (Cut and Concatenate)
+    print(f"\nTuyệt vời! Tìm thấy {len(rallies)} pha bóng bền (Rallies):")
+    for i, r in enumerate(rallies):
+        print(f"  - Pha {i+1}: {r['num_hits']} chạm | Từ {r['start_hit']:.1f}s đến {r['end_hit']:.1f}s")
+
     try:
-        # Load source video
         source_clip = VideoFileClip(VIDEO_PATH)
         total_duration = source_clip.duration
-        
         highlight_clips = []
         
-        print("\nCutting video...")
-        for idx, hits in tqdm(high_activity_indices, desc="Processing Clips"):
-            # Mapping Timestamp
-            start_time = idx * SEGMENT_DURATION
-            end_time = start_time + SEGMENT_DURATION
+        print("\nĐang cắt các đoạn highlight (có thêm Padding)...")
+        for r in tqdm(rallies, desc="Cắt clip"):
+            start_cut = max(0, r['start_hit'] - PADDING_START)
+            end_cut = min(total_duration, r['end_hit'] + PADDING_END)
             
-            # Check boundaries
-            if start_time >= total_duration:
-                continue
-            if end_time > total_duration:
-                end_time = total_duration
-            
-            clip = source_clip.subclipped(start_time, end_time)
-            
+            clip = source_clip.subclipped(start_cut, end_cut)
             highlight_clips.append(clip)
 
-        # Concatenate
-        print(f"\nMerging {len(highlight_clips)} clips...")
-        final_clip = concatenate_videoclips(highlight_clips, method="compose")
+        print(f"\nĐang ghép nối {len(highlight_clips)} pha bóng...")
+        final_clip = concatenate_videoclips(highlight_clips)
 
-        # Export
-        print(f"Rendering video: {OUTPUT_VIDEO}")
-        print("Please wait, rendering may take a while...")
+        os.makedirs(os.path.dirname(OUTPUT_VIDEO), exist_ok=True)
+        print(f"Đang render video ra: {OUTPUT_VIDEO}")
         
         final_clip.write_videofile(
             OUTPUT_VIDEO, 
             codec='libx264', 
             audio_codec='aac',
+            audio=True,
             temp_audiofile='temp-audio.m4a',
             remove_temp=True,
             fps=source_clip.fps
@@ -98,10 +106,10 @@ def create_highlight_video():
         source_clip.close()
         final_clip.close()
         
-        print("\nDONE! Highlight video is ready.")
+        print("\nXONG! Video highlight chất lượng cao đã sẵn sàng.")
         
     except Exception as e:
-        print(f"Error processing video: {e}")
+        print(f"Lỗi trong quá trình cắt video: {e}")
 
 if __name__ == "__main__":
     create_highlight_video()
